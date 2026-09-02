@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <library>
-  <textbook id="apush-textbook">
+  <textbook id="apush-textbook" sourceUrl="https://archive.org/details/american-history-15th-edition-alan-brinkley-american-history-connecting-with-the_202007/">
     <title>APUSH Textbook</title>
     <pdfUrl>textbooks/apush-textbook-1.pdf</pdfUrl>
     <bookmarks>

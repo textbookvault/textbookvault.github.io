@@ -20,10 +20,20 @@
     </aside>
 
     <main class="pdf-container">
+      <!-- Navigation Controls -->
       <div class="controls">
-        <span>Page: <span id="page-num">1</span> / <span id="page-count">-</span></span>
+        <button id="prev-page" class="btn-nav">← Prev</button>
+        <span>
+          Page <input type="number" id="page-input" value="1" min="1"> / <span id="page-count">-</span>
+        </span>
+        <button id="next-page" class="btn-nav">Next →</button>
       </div>
-      <canvas id="pdf-render"></canvas>
+      
+      <!-- Canvas and Overlay -->
+      <div class="canvas-wrapper" style="position: relative; display: inline-block;">
+        <canvas id="pdf-render"></canvas>
+        <div id="pdf-attribution" class="pdf-attribution-overlay"></div>
+      </div>
     </main>
   </div>
 
@@ -37,13 +47,12 @@
 
     const scale = 1.2,
           canvas = document.getElementById('pdf-render'),
-          ctx = canvas.getContext('2d');
+          ctx = canvas.getContext('2d'),
+          pageInput = document.getElementById('page-input');
 
-    // Get textbook ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
 
-    // Fetch XML configuration
     fetch('textbooks.xml')
       .then(response => response.text())
       .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
@@ -54,24 +63,33 @@
         document.getElementById('book-title').textContent = book.querySelector('title').textContent;
         const pdfPath = book.querySelector('pdfUrl').textContent;
         
-        // Build jump buttons from XML
+        // Attribution Link
+        const sourceUrl = book.getAttribute('sourceUrl');
+        const attributionContainer = document.getElementById('pdf-attribution');
+        if (sourceUrl) {
+          attributionContainer.innerHTML = `Source Material: <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">${sourceUrl}</a>`;
+          attributionContainer.style.display = 'block';
+        } else {
+          attributionContainer.style.display = 'none';
+        }
+
+        // Bookmark Buttons
         const bookmarkContainer = document.getElementById('bookmark-buttons');
         const bookmarks = book.querySelectorAll('bookmark');
-        
         bookmarks.forEach(bm => {
           const page = parseInt(bm.getAttribute('page'));
           const label = bm.textContent;
-          
           const btn = document.createElement('button');
           btn.textContent = `${label} (p. ${page})`;
           btn.onclick = () => goToPage(page);
           bookmarkContainer.appendChild(btn);
         });
 
-        // Initialize PDF display
+        // Initialize PDF
         pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
           pdfDoc = pdfDoc_;
           document.getElementById('page-count').textContent = pdfDoc.numPages;
+          pageInput.max = pdfDoc.numPages;
           renderPage(pageNum);
         });
       });
@@ -93,7 +111,7 @@
           }
         });
 
-        document.getElementById('page-num').textContent = num;
+        pageInput.value = num;
       });
     }
 
@@ -106,9 +124,34 @@
     }
 
     function goToPage(num) {
+      if (num < 1 || num > pdfDoc.numPages) return;
       pageNum = num;
       queueRenderPage(pageNum);
     }
+
+    // Previous Button
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
+    });
+
+    // Next Button
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    });
+
+    // Direct Input Box Change
+    pageInput.addEventListener('change', (e) => {
+      const targetPage = parseInt(e.target.value);
+      if (targetPage >= 1 && targetPage <= pdfDoc.numPages) {
+        goToPage(targetPage);
+      } else {
+        e.target.value = pageNum;
+      }
+    });
   </script>
 </body>
 </html>
