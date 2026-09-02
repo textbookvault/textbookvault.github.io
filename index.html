@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Textbook Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Textbook Hub</h1>
+  </header>
+  
+  <main class="container">
+    <section class="hero">
+      <h2>Available Textbooks</h2>
+      <div id="textbook-list" class="button-group"></div>
+    </section>
+  </main>
+
+  <script>
+    fetch('textbooks.xml')
+      .then(response => response.text())
+      .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+      .then(data => {
+        const textbooks = data.querySelectorAll('textbook');
+        const listContainer = document.getElementById('textbook-list');
+        
+        textbooks.forEach(book => {
+          const id = book.getAttribute('id');
+          const title = book.querySelector('title').textContent;
+          
+          const link = document.createElement('a');
+          link.href = `viewer.html?id=${id}`;
+          link.className = 'btn-primary';
+          link.textContent = `View ${title}`;
+          listContainer.appendChild(link);
+        });
+      });
+  </script>
+</body>
+</html>

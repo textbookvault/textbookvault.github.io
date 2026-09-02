@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer - Textbook Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1 id="book-title">Loading...</h1>
+    <a href="index.html" class="nav-link">← Back to Home</a>
+  </header>
+
+  <div class="viewer-layout">
+    <aside class="sidebar">
+      <h3>Quick Jump</h3>
+      <div id="bookmark-buttons" class="button-group"></div>
+    </aside>
+
+    <main class="pdf-container">
+      <div class="controls">
+        <span>Page: <span id="page-num">1</span> / <span id="page-count">-</span></span>
+      </div>
+      <canvas id="pdf-render"></canvas>
+    </main>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let pdfDoc = null,
+        pageNum = 1,
+        pageIsRendering = false,
+        pageNumIsPending = null;
+
+    const scale = 1.2,
+          canvas = document.getElementById('pdf-render'),
+          ctx = canvas.getContext('2d');
+
+    // Get textbook ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedId = urlParams.get('id');
+
+    // Fetch XML configuration
+    fetch('textbooks.xml')
+      .then(response => response.text())
+      .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+      .then(data => {
+        const book = data.querySelector(`textbook[id="${selectedId}"]`);
+        if (!book) return;
+
+        document.getElementById('book-title').textContent = book.querySelector('title').textContent;
+        const pdfPath = book.querySelector('pdfUrl').textContent;
+        
+        // Build jump buttons from XML
+        const bookmarkContainer = document.getElementById('bookmark-buttons');
+        const bookmarks = book.querySelectorAll('bookmark');
+        
+        bookmarks.forEach(bm => {
+          const page = parseInt(bm.getAttribute('page'));
+          const label = bm.textContent;
+          
+          const btn = document.createElement('button');
+          btn.textContent = `${label} (p. ${page})`;
+          btn.onclick = () => goToPage(page);
+          bookmarkContainer.appendChild(btn);
+        });
+
+        // Initialize PDF display
+        pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
+          pdfDoc = pdfDoc_;
+          document.getElementById('page-count').textContent = pdfDoc.numPages;
+          renderPage(pageNum);
+        });
+      });
+
+    function renderPage(num) {
+      pageIsRendering = true;
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderCtx = { canvasContext: ctx, viewport };
+
+        page.render(renderCtx).promise.then(() => {
+          pageIsRendering = false;
+          if (pageNumIsPending !== null) {
+            renderPage(pageNumIsPending);
+            pageNumIsPending = null;
+          }
+        });
+
+        document.getElementById('page-num').textContent = num;
+      });
+    }
+
+    function queueRenderPage(num) {
+      if (pageIsRendering) {
+        pageNumIsPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    function goToPage(num) {
+      pageNum = num;
+      queueRenderPage(pageNum);
+    }
+  </script>
+</body>
+</html>

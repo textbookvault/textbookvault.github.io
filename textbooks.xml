@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <textbook id="apush-textbook">
+    <title>APUSH Textbook</title>
+    <pdfUrl>textbooks/apush-textbook-1.pdf</pdfUrl>
+    <bookmarks>
+      <bookmark page="542">Chapter 19</bookmark>
+    </bookmarks>
+  </textbook>
+</library>
