@@ -36,7 +36,8 @@
           link.textContent = `View ${title}`;
           listContainer.appendChild(link);
         });
-      });
+      })
+      .catch(err => console.error("Error loading XML:", err));
   </script>
 </body>
 </html>

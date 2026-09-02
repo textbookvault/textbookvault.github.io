@@ -14,13 +14,18 @@
   </header>
 
   <div class="viewer-layout">
+    <!-- Sidebar Navigation & Attribution -->
     <aside class="sidebar">
       <h3>Quick Jump</h3>
       <div id="bookmark-buttons" class="button-group"></div>
+
+      <div id="sidebar-source" class="sidebar-source-box" style="display: none;">
+        <h4>Source Material</h4>
+        <div id="source-link-content"></div>
+      </div>
     </aside>
 
     <main class="pdf-container">
-      <!-- Navigation Controls -->
       <div class="controls">
         <button id="prev-page" class="btn-nav">← Prev</button>
         <span>
@@ -29,10 +34,14 @@
         <button id="next-page" class="btn-nav">Next →</button>
       </div>
       
-      <!-- Canvas and Overlay -->
-      <div class="canvas-wrapper" style="position: relative; display: inline-block;">
+      <div class="canvas-wrapper">
+        <!-- Loading Overlay -->
+        <div id="pdf-loading" class="pdf-loading-overlay">
+          <div class="spinner"></div>
+          <p>Loading PDF, please wait...</p>
+        </div>
+
         <canvas id="pdf-render"></canvas>
-        <div id="pdf-attribution" class="pdf-attribution-overlay"></div>
       </div>
     </main>
   </div>
@@ -43,12 +52,15 @@
     let pdfDoc = null,
         pageNum = 1,
         pageIsRendering = false,
-        pageNumIsPending = null;
+        pageNumIsPending = null,
+        activeSourceUrl = null;
 
-    const scale = 1.2,
-          canvas = document.getElementById('pdf-render'),
+    const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
-          pageInput = document.getElementById('page-input');
+          pageInput = document.getElementById('page-input'),
+          loadingOverlay = document.getElementById('pdf-loading'),
+          sidebarSource = document.getElementById('sidebar-source'),
+          sourceContent = document.getElementById('source-link-content');
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
@@ -63,17 +75,8 @@
         document.getElementById('book-title').textContent = book.querySelector('title').textContent;
         const pdfPath = book.querySelector('pdfUrl').textContent;
         
-        // Attribution Link
-        const sourceUrl = book.getAttribute('sourceUrl');
-        const attributionContainer = document.getElementById('pdf-attribution');
-        if (sourceUrl) {
-          attributionContainer.innerHTML = `Source Material: <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">${sourceUrl}</a>`;
-          attributionContainer.style.display = 'block';
-        } else {
-          attributionContainer.style.display = 'none';
-        }
+        activeSourceUrl = book.getAttribute('sourceUrl');
 
-        // Bookmark Buttons
         const bookmarkContainer = document.getElementById('bookmark-buttons');
         const bookmarks = book.querySelectorAll('bookmark');
         bookmarks.forEach(bm => {
@@ -85,7 +88,6 @@
           bookmarkContainer.appendChild(btn);
         });
 
-        // Initialize PDF
         pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
           pdfDoc = pdfDoc_;
           document.getElementById('page-count').textContent = pdfDoc.numPages;
@@ -96,15 +98,42 @@
 
     function renderPage(num) {
       pageIsRendering = true;
-      pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      
+      sidebarSource.style.display = 'none';
+      loadingOverlay.style.display = 'flex';
 
-        const renderCtx = { canvasContext: ctx, viewport };
+      pdfDoc.getPage(num).then(page => {
+        // High-DPI scaling for ultra-sharp text rendering
+        const outputScale = window.devicePixelRatio || 1;
+        const baseScale = 1.5; 
+        const viewport = page.getViewport({ scale: baseScale });
+
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+
+        const transform = outputScale !== 1 
+          ? [outputScale, 0, 0, outputScale, 0, 0] 
+          : null;
+
+        const renderCtx = { 
+          canvasContext: ctx, 
+          viewport: viewport,
+          transform: transform
+        };
 
         page.render(renderCtx).promise.then(() => {
           pageIsRendering = false;
+          
+          loadingOverlay.style.display = 'none';
+
+          if (activeSourceUrl) {
+            sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
+            sidebarSource.style.display = 'block';
+          }
+
           if (pageNumIsPending !== null) {
             renderPage(pageNumIsPending);
             pageNumIsPending = null;
@@ -129,21 +158,18 @@
       queueRenderPage(pageNum);
     }
 
-    // Previous Button
     document.getElementById('prev-page').addEventListener('click', () => {
       if (pageNum <= 1) return;
       pageNum--;
       queueRenderPage(pageNum);
     });
 
-    // Next Button
     document.getElementById('next-page').addEventListener('click', () => {
       if (pageNum >= pdfDoc.numPages) return;
       pageNum++;
       queueRenderPage(pageNum);
     });
 
-    // Direct Input Box Change
     pageInput.addEventListener('change', (e) => {
       const targetPage = parseInt(e.target.value);
       if (targetPage >= 1 && targetPage <= pdfDoc.numPages) {

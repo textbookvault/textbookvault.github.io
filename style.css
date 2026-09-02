@@ -64,7 +64,7 @@ header h1 {
   background-color: var(--primary-hover);
 }
 
-/* Viewer Layout */
+/* Layout */
 .viewer-layout {
   display: flex;
   gap: 2rem;
@@ -105,6 +105,29 @@ header h1 {
   border-color: var(--primary);
 }
 
+.sidebar-source-box {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-source-box h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.sidebar-source-box a {
+  color: var(--primary);
+  font-size: 0.85rem;
+  word-break: break-all;
+  text-decoration: underline;
+}
+
+.sidebar-source-box a:hover {
+  color: var(--primary-hover);
+}
+
 .pdf-container {
   flex: 1;
   display: flex;
@@ -114,41 +137,6 @@ header h1 {
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.controls {
-  margin-bottom: 1rem;
-  font-weight: bold;
-}
-
-canvas {
-  border: 1px solid var(--border);
-  max-width: 100%;
-  height: auto;
-}
-.pdf-attribution-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.75);
-  color: #ffffff;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  text-align: center;
-  z-index: 10;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-}
-
-.pdf-attribution-overlay a {
-  color: #64b5f6;
-  text-decoration: underline;
-  word-break: break-all;
-}
-
-.pdf-attribution-overlay a:hover {
-  color: #90caf9;
 }
 
 .controls {
@@ -181,4 +169,51 @@ canvas {
   font-size: 1rem;
   border: 1px solid var(--border);
   border-radius: 4px;
+}
+
+/* Canvas Container & Overlays */
+.canvas-wrapper {
+  position: relative;
+  display: inline-block;
+  min-width: 600px;
+  min-height: 800px;
+  background: var(--bg-color);
+  border: 1px solid var(--border);
+}
+
+canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.pdf-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  font-weight: bold;
+  color: var(--text);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
