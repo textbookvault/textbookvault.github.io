@@ -5,6 +5,17 @@
   --primary-hover: #357abd;
   --text: #333333;
   --border: #e0e0e0;
+  --input-bg: #ffffff;
+}
+
+body.dark-mode {
+  --bg-color: #18191a;
+  --card-bg: #242526;
+  --primary: #4a90e2;
+  --primary-hover: #66a3e0;
+  --text: #e4e6eb;
+  --border: #3e4042;
+  --input-bg: #3a3b3c;
 }
 
 body {
@@ -12,6 +23,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-color);
   color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 header {
@@ -28,10 +40,31 @@ header h1 {
   font-size: 1.5rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .nav-link {
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
+}
+
+.btn-theme {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-theme:hover {
+  background-color: var(--border);
 }
 
 .container {
@@ -73,13 +106,25 @@ header h1 {
   margin: 0 auto;
 }
 
-.sidebar {
+.sidebar-container {
   width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sidebar-card {
   background: var(--card-bg);
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  height: fit-content;
+}
+
+.sidebar-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--text);
 }
 
 .button-group {
@@ -91,6 +136,7 @@ header h1 {
 .button-group button {
   background: var(--bg-color);
   border: 1px solid var(--border);
+  color: var(--text);
   padding: 0.6rem;
   border-radius: 4px;
   cursor: pointer;
@@ -105,26 +151,14 @@ header h1 {
   border-color: var(--primary);
 }
 
-.sidebar-source-box {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.sidebar-source-box h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.95rem;
-  color: var(--text);
-}
-
-.sidebar-source-box a {
+.sidebar-card a {
   color: var(--primary);
   font-size: 0.85rem;
   word-break: break-all;
   text-decoration: underline;
 }
 
-.sidebar-source-box a:hover {
+.sidebar-card a:hover {
   color: var(--primary-hover);
 }
 
@@ -167,6 +201,8 @@ header h1 {
   text-align: center;
   padding: 0.3rem;
   font-size: 1rem;
+  background-color: var(--input-bg);
+  color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
 }
@@ -193,7 +229,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-bg);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -216,35 +252,4 @@ canvas {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-.sidebar-container {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.sidebar-card {
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.sidebar-card h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: var(--text);
-}
-
-.sidebar-card a {
-  color: var(--primary);
-  font-size: 0.85rem;
-  word-break: break-all;
-  text-decoration: underline;
-}
-
-.sidebar-card a:hover {
-  color: var(--primary-hover);
 }
