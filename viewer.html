@@ -14,13 +14,17 @@
   </header>
 
   <div class="viewer-layout">
-    <!-- Sidebar Navigation & Attribution -->
-    <aside class="sidebar">
-      <h3>Quick Jump</h3>
-      <div id="bookmark-buttons" class="button-group"></div>
+    <!-- Sidebar -->
+    <aside class="sidebar-container">
+      <!-- Quick Jump Bubble -->
+      <div class="sidebar-card">
+        <h3>Quick Jump</h3>
+        <div id="bookmark-buttons" class="button-group"></div>
+      </div>
 
-      <div id="sidebar-source" class="sidebar-source-box" style="display: none;">
-        <h4>Source Material</h4>
+      <!-- Separate Source Material Bubble -->
+      <div id="sidebar-source" class="sidebar-card" style="display: none;">
+        <h3>Source Material</h3>
         <div id="source-link-content"></div>
       </div>
     </aside>
@@ -103,7 +107,6 @@
       loadingOverlay.style.display = 'flex';
 
       pdfDoc.getPage(num).then(page => {
-        // High-DPI scaling for ultra-sharp text rendering
         const outputScale = window.devicePixelRatio || 1;
         const baseScale = 1.5; 
         const viewport = page.getViewport({ scale: baseScale });
