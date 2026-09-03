@@ -56,7 +56,6 @@
         </div>
 
         <canvas id="pdf-render"></canvas>
-        <div id="text-layer" class="textLayer"></div>
       </div>
     </main>
   </div>
@@ -86,7 +85,6 @@
 
     const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
-          textLayer = document.getElementById('text-layer'),
           pageInput = document.getElementById('page-input'),
           loadingOverlay = document.getElementById('pdf-loading'),
           sidebarSource = document.getElementById('sidebar-source'),
@@ -169,7 +167,6 @@
     function renderPage(num) {
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
-      textLayer.innerHTML = '';
 
       pdfDoc.getPage(num).then(page => {
         const outputScale = window.devicePixelRatio || 1;
@@ -186,9 +183,6 @@
         canvas.style.width = Math.floor(viewport.width) + "px";
         canvas.style.height = Math.floor(viewport.height) + "px";
 
-        textLayer.style.width = Math.floor(viewport.width) + "px";
-        textLayer.style.height = Math.floor(viewport.height) + "px";
-
         const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
 
         const renderCtx = { 
@@ -202,17 +196,6 @@
         renderTask.promise.then(() => {
           pageIsRendering = false;
           loadingOverlay.style.display = 'none';
-
-          return page.getTextContent();
-        }).then(textContent => {
-            return page.getTextContent();
-            }).then(textContent => {
-            pdfjsLib.renderTextLayer({
-                textContentSource: textContent,
-                container: textLayer,
-                viewport: viewport,
-                textDivs: []
-            });
 
           if (pageNumIsPending !== null) {
             renderPage(pageNumIsPending);
