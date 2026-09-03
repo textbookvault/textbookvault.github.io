@@ -52,7 +52,7 @@
       <div id="canvas-wrapper" class="canvas-wrapper">
         <div id="pdf-loading" class="pdf-loading-overlay">
           <div class="spinner"></div>
-          <p id="loading-text">Loading PDF, please wait...</p>
+          <p>Loading PDF, please wait...</p>
         </div>
 
         <canvas id="pdf-render"></canvas>
@@ -82,8 +82,7 @@
     let pdfDoc = null,
         pageNum = 1,
         pageIsRendering = false,
-        pageNumIsPending = null,
-        pageCache = {};
+        pageNumIsPending = null;
 
     const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
@@ -107,33 +106,6 @@
       notFoundContainer.style.display = 'block';
     }
 
-    async function getPageFromCache(num) {
-      if (pageCache[num]) return pageCache[num];
-      const page = await pdfDoc.getPage(num);
-      pageCache[num] = page;
-      return page;
-    }
-
-    async function preloadPages() {
-      const initialBatch = Math.min(10, pdfDoc.numPages);
-      
-      // Load initial batch of 10 pages into memory
-      for (let i = 1; i <= initialBatch; i++) {
-        if (!pageCache[i]) {
-          pageCache[i] = await pdfDoc.getPage(i);
-        }
-      }
-
-      // Preload remaining pages sequentially in background
-      (async () => {
-        for (let i = initialBatch + 1; i <= pdfDoc.numPages; i++) {
-          if (!pageCache[i]) {
-            pageCache[i] = await pdfDoc.getPage(i);
-          }
-        }
-      })();
-    }
-
     if (!selectedId) {
       showNotFound();
     } else {
@@ -150,7 +122,6 @@
           document.getElementById('book-title').textContent = book.querySelector('title').textContent;
           const pdfPath = book.querySelector('pdfUrl').textContent;
           
-          // Render Notes instantly from XML
           const notes = book.querySelectorAll('notes > note');
           if (notes.length > 0) {
             notesList.innerHTML = '';
@@ -162,14 +133,12 @@
             sidebarNotes.style.display = 'block';
           }
 
-          // Render Source Material instantly from XML
           const activeSourceUrl = book.getAttribute('sourceUrl');
           if (activeSourceUrl) {
             sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
             sidebarSource.style.display = 'block';
           }
 
-          // Render Quick Jump bookmarks instantly from XML
           const bookmarkContainer = document.getElementById('bookmark-buttons');
           const bookmarks = book.querySelectorAll('bookmark');
           bookmarks.forEach(bm => {
@@ -181,15 +150,11 @@
             bookmarkContainer.appendChild(btn);
           });
 
-          // Fetch PDF Document metadata
           pdfjsLib.getDocument({ url: pdfPath, nativeImageDecoderSupport: 'none' }).promise.then(pdfDoc_ => {
             pdfDoc = pdfDoc_;
             document.getElementById('page-count').textContent = pdfDoc.numPages;
             pageInput.max = pdfDoc.numPages;
-
-            // Render first page immediately & trigger background loading
             renderPage(pageNum);
-            preloadPages();
           }).catch(err => {
             console.error("PDF Load Error:", err);
             showNotFound();
@@ -201,13 +166,12 @@
         });
     }
 
-    async function renderPage(num) {
+    function renderPage(num) {
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
       textLayer.innerHTML = '';
 
-      try {
-        const page = await getPageFromCache(num);
+      pdfDoc.getPage(num).then(page => {
         const outputScale = window.devicePixelRatio || 1;
         
         const containerWidth = pdfContainer.clientWidth - 40; 
@@ -233,31 +197,29 @@
           transform: transform
         };
 
-        await page.render(renderCtx).promise;
+        const renderTask = page.render(renderCtx);
 
-        pageIsRendering = false;
-        loadingOverlay.style.display = 'none';
+        renderTask.promise.then(() => {
+          pageIsRendering = false;
+          loadingOverlay.style.display = 'none';
 
-        const textContent = await page.getTextContent();
-        pdfjsLib.renderTextLayer({
-          textContentSource: textContent,
-          container: textLayer,
-          viewport: viewport,
-          textDivs: []
+          return page.getTextContent();
+        }).then(textContent => {
+          pdfjsLib.renderTextLayer({
+            textContentSource: textContent,
+            container: textLayer,
+            viewport: viewport,
+            textDivs: []
+          });
+
+          if (pageNumIsPending !== null) {
+            renderPage(pageNumIsPending);
+            pageNumIsPending = null;
+          }
         });
 
-        if (pageNumIsPending !== null) {
-          const nextNum = pageNumIsPending;
-          pageNumIsPending = null;
-          renderPage(nextNum);
-        }
-
         pageInput.value = num;
-      } catch (err) {
-        console.error("Page Render Error:", err);
-        pageIsRendering = false;
-        loadingOverlay.style.display = 'none';
-      }
+      });
     }
 
     function queueRenderPage(num) {
