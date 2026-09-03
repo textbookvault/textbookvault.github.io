@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Viewer - Textbook Vault</title>
+  <title>PDF Viewer - Textbook Hub</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -16,14 +16,12 @@
     </div>
   </header>
 
-  <!-- Error Container (Hidden by default) -->
   <div id="not-found-container" class="not-found-card" style="display: none;">
     <h2>404 - Textbook Not Found</h2>
     <p>The textbook you are looking for does not exist or may have been moved.</p>
     <a href="index.html" class="btn-primary">Return to Library</a>
   </div>
 
-  <!-- Main Viewer Layout -->
   <div id="viewer-layout" class="viewer-layout">
     <aside class="sidebar-container">
       <div class="sidebar-card">
@@ -53,6 +51,7 @@
         </div>
 
         <canvas id="pdf-render"></canvas>
+        <div id="text-layer" class="textLayer"></div>
       </div>
     </main>
   </div>
@@ -82,6 +81,7 @@
 
     const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
+          textLayer = document.getElementById('text-layer'),
           pageInput = document.getElementById('page-input'),
           loadingOverlay = document.getElementById('pdf-loading'),
           sidebarSource = document.getElementById('sidebar-source'),
@@ -106,7 +106,6 @@
         .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
         .then(data => {
           const book = data.querySelector(`textbook[id="${selectedId}"]`);
-          
           if (!book) {
             showNotFound();
             return;
@@ -132,7 +131,7 @@
             bookmarkContainer.appendChild(btn);
           });
 
-          pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
+          pdfjsLib.getDocument({ url: pdfPath, nativeImageDecoderSupport: 'none' }).promise.then(pdfDoc_ => {
             pdfDoc = pdfDoc_;
             document.getElementById('page-count').textContent = pdfDoc.numPages;
             pageInput.max = pdfDoc.numPages;
@@ -151,6 +150,7 @@
     function renderPage(num) {
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
+      textLayer.innerHTML = '';
 
       pdfDoc.getPage(num).then(page => {
         const outputScale = window.devicePixelRatio || 1;
@@ -163,6 +163,9 @@
         canvas.style.width = Math.floor(viewport.width) + "px";
         canvas.style.height = Math.floor(viewport.height) + "px";
 
+        textLayer.style.width = Math.floor(viewport.width) + "px";
+        textLayer.style.height = Math.floor(viewport.height) + "px";
+
         const transform = outputScale !== 1 
           ? [outputScale, 0, 0, outputScale, 0, 0] 
           : null;
@@ -173,9 +176,21 @@
           transform: transform
         };
 
-        page.render(renderCtx).promise.then(() => {
+        const renderTask = page.render(renderCtx);
+
+        renderTask.promise.then(() => {
           pageIsRendering = false;
           loadingOverlay.style.display = 'none';
+
+          // Extract native text layer
+          return page.getTextContent();
+        }).then(textContent => {
+          pdfjsLib.renderTextLayer({
+            textContentSource: textContent,
+            container: textLayer,
+            viewport: viewport,
+            textDivs: []
+          });
 
           if (pageNumIsPending !== null) {
             renderPage(pageNumIsPending);

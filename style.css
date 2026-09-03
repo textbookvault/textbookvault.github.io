@@ -67,37 +67,16 @@ header h1 {
   background-color: var(--border);
 }
 
-.container {
-  max-width: 800px;
-  margin: 4rem auto;
-  padding: 0 1rem;
+.not-found-card {
+  max-width: 500px;
+  margin: 5rem auto;
+  padding: 3rem 2rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   text-align: center;
 }
 
-.hero {
-  background: var(--card-bg);
-  padding: 3rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.btn-primary {
-  display: inline-block;
-  background-color: var(--primary);
-  color: white;
-  padding: 0.8rem 1.5rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  margin-top: 1rem;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-}
-
-/* Layout */
 .viewer-layout {
   display: flex;
   gap: 2rem;
@@ -158,10 +137,6 @@ header h1 {
   text-decoration: underline;
 }
 
-.sidebar-card a:hover {
-  color: var(--primary-hover);
-}
-
 .pdf-container {
   flex: 1;
   display: flex;
@@ -189,11 +164,6 @@ header h1 {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  transition: background 0.2s;
-}
-
-.btn-nav:hover {
-  background-color: var(--primary-hover);
 }
 
 #page-input {
@@ -207,7 +177,7 @@ header h1 {
   border-radius: 4px;
 }
 
-/* Canvas Container & Overlays */
+/* Canvas & Vector Overlay */
 .canvas-wrapper {
   position: relative;
   display: inline-block;
@@ -221,6 +191,25 @@ canvas {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+.textLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1;
+}
+
+.textLayer span {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
 }
 
 .pdf-loading-overlay {
