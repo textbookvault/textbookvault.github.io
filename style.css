@@ -28,7 +28,7 @@ body {
 
 header {
   background-color: var(--card-bg);
-  padding: 1rem 2rem;
+  padding: 0.8rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -37,7 +37,7 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .header-actions {
@@ -56,7 +56,7 @@ header h1 {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.5rem 0.8rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
@@ -69,14 +69,14 @@ header h1 {
 
 .container {
   max-width: 800px;
-  margin: 4rem auto;
+  margin: 2rem auto;
   padding: 0 1rem;
   text-align: center;
 }
 
 .hero {
   background: var(--card-bg);
-  padding: 3rem;
+  padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
@@ -107,64 +107,66 @@ header h1 {
   text-align: center;
 }
 
-/* Layout */
+/* Fluid Layout */
 .viewer-layout {
   display: flex;
-  gap: 2rem;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 1rem;
+  padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-container {
-  width: 250px;
+  width: 220px;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .sidebar-card {
   background: var(--card-bg);
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-card h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
   color: var(--text);
 }
 
 .notes-list {
   margin: 0;
-  padding-left: 1.2rem;
-  font-size: 0.9rem;
+  padding-left: 1rem;
+  font-size: 0.85rem;
   color: var(--text);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .notes-list li {
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .button-group button {
   background: var(--bg-color);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.6rem;
+  padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
   text-align: left;
+  font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
 }
@@ -177,7 +179,7 @@ header h1 {
 
 .sidebar-card a {
   color: var(--primary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   word-break: break-all;
   text-decoration: underline;
 }
@@ -188,16 +190,17 @@ header h1 {
   flex-direction: column;
   align-items: center;
   background: var(--card-bg);
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 .controls {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   font-weight: bold;
 }
 
@@ -205,7 +208,7 @@ header h1 {
   background-color: var(--primary);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
@@ -220,27 +223,23 @@ header h1 {
   width: 50px;
   text-align: center;
   padding: 0.3rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   background-color: var(--input-bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
 }
 
-/* Canvas & Text Overlay */
+/* Dynamic Canvas Container */
 .canvas-wrapper {
   position: relative;
-  display: inline-block;
-  min-width: 600px;
-  min-height: 800px;
+  display: block;
   background: var(--bg-color);
   border: 1px solid var(--border);
 }
 
 canvas {
   display: block;
-  max-width: 100%;
-  height: auto;
 }
 
 .textLayer {
@@ -279,8 +278,8 @@ canvas {
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: 4px solid var(--border);
   border-top: 4px solid var(--primary);
   border-radius: 50%;

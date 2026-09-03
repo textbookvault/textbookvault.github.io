@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Viewer - Textbook Hub</title>
+  <title>PDF Viewer - Textbook Vault</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -19,7 +19,7 @@
   <div id="not-found-container" class="not-found-card" style="display: none;">
     <h2>404 - Textbook Not Found</h2>
     <p>The textbook you are looking for does not exist or may have been moved.</p>
-    <a href="index.html" class="btn-primary">Return to Library</a>
+    <a href="index.html" class="btn-primary">Return to Vault</a>
   </div>
 
   <div id="viewer-layout" class="viewer-layout">
@@ -49,7 +49,7 @@
         <button id="next-page" class="btn-nav">Next →</button>
       </div>
       
-      <div class="canvas-wrapper">
+      <div id="canvas-wrapper" class="canvas-wrapper">
         <div id="pdf-loading" class="pdf-loading-overlay">
           <div class="spinner"></div>
           <p>Loading PDF, please wait...</p>
@@ -94,7 +94,8 @@
           sidebarNotes = document.getElementById('sidebar-notes'),
           notesList = document.getElementById('notes-list'),
           viewerLayout = document.getElementById('viewer-layout'),
-          notFoundContainer = document.getElementById('not-found-container');
+          notFoundContainer = document.getElementById('not-found-container'),
+          pdfContainer = document.querySelector('.pdf-container');
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
@@ -172,8 +173,12 @@
 
       pdfDoc.getPage(num).then(page => {
         const outputScale = window.devicePixelRatio || 1;
-        const baseScale = 1.2; 
-        const viewport = page.getViewport({ scale: baseScale });
+        
+        const containerWidth = pdfContainer.clientWidth - 40; 
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        const dynamicScale = containerWidth / unscaledViewport.width;
+        
+        const viewport = page.getViewport({ scale: dynamicScale });
 
         canvas.width = Math.floor(viewport.width * outputScale);
         canvas.height = Math.floor(viewport.height * outputScale);
@@ -250,6 +255,10 @@
       } else {
         e.target.value = pageNum;
       }
+    });
+
+    window.addEventListener('resize', () => {
+      if (pdfDoc) queueRenderPage(pageNum);
     });
   </script>
 </body>
