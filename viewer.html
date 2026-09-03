@@ -99,6 +99,7 @@
     const selectedId = urlParams.get('id');
 
     function showNotFound() {
+      document.title = 'Textbook Not Found - Textbook Vault';
       document.getElementById('book-title').textContent = 'Textbook Not Found';
       viewerLayout.style.display = 'none';
       notFoundContainer.style.display = 'block';
@@ -117,7 +118,10 @@
             return;
           }
 
-          document.getElementById('book-title').textContent = book.querySelector('title').textContent;
+          const bookTitle = book.querySelector('title').textContent;
+          document.getElementById('book-title').textContent = bookTitle;
+          document.title = `${bookTitle} - Textbook Vault`;
+
           const pdfPath = book.querySelector('pdfUrl').textContent;
           
           const notes = book.querySelectorAll('notes > note');
