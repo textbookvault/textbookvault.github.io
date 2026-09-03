@@ -42,6 +42,11 @@
           Page <input type="number" id="page-input" value="1" min="1"> / <span id="page-count">-</span>
         </span>
         <button id="next-page" class="btn-nav">Next →</button>
+        <span class="zoom-controls">
+          <button id="zoom-out" class="btn-nav">-</button>
+          <span id="zoom-level">100%</span>
+          <button id="zoom-in" class="btn-nav">+</button>
+        </span>
       </div>
       
       <div class="canvas-wrapper">
@@ -77,7 +82,9 @@
     let pdfDoc = null,
         pageNum = 1,
         pageIsRendering = false,
-        pageNumIsPending = null;
+        pageNumIsPending = null,
+        userZoomScale = 1.2,
+        renderTask = null;
 
     const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
@@ -87,7 +94,8 @@
           sidebarSource = document.getElementById('sidebar-source'),
           sourceContent = document.getElementById('source-link-content'),
           viewerLayout = document.getElementById('viewer-layout'),
-          notFoundContainer = document.getElementById('not-found-container');
+          notFoundContainer = document.getElementById('not-found-container'),
+          zoomLevelText = document.getElementById('zoom-level');
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
@@ -148,27 +156,31 @@
     }
 
     function renderPage(num) {
+      if (pageIsRendering && renderTask) {
+        renderTask.cancel();
+      }
+
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
       textLayer.innerHTML = '';
 
       pdfDoc.getPage(num).then(page => {
-        const outputScale = window.devicePixelRatio || 1;
-        const baseScale = 1.2; 
-        const viewport = page.getViewport({ scale: baseScale });
+        // Multiply by screen density to ensure retina/high-DPI sharpness
+        const dpr = window.devicePixelRatio || 1;
+        const viewport = page.getViewport({ scale: userZoomScale });
 
-        canvas.width = Math.floor(viewport.width * outputScale);
-        canvas.height = Math.floor(viewport.height * outputScale);
+        // Internal resolution scales up dynamically when zoomed
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
 
+        // Display dimensions match exact zoom size
         canvas.style.width = Math.floor(viewport.width) + "px";
         canvas.style.height = Math.floor(viewport.height) + "px";
 
         textLayer.style.width = Math.floor(viewport.width) + "px";
         textLayer.style.height = Math.floor(viewport.height) + "px";
 
-        const transform = outputScale !== 1 
-          ? [outputScale, 0, 0, outputScale, 0, 0] 
-          : null;
+        const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
 
         const renderCtx = { 
           canvasContext: ctx, 
@@ -176,13 +188,12 @@
           transform: transform
         };
 
-        const renderTask = page.render(renderCtx);
+        renderTask = page.render(renderCtx);
 
         renderTask.promise.then(() => {
           pageIsRendering = false;
           loadingOverlay.style.display = 'none';
 
-          // Extract native text layer
           return page.getTextContent();
         }).then(textContent => {
           pdfjsLib.renderTextLayer({
@@ -196,9 +207,14 @@
             renderPage(pageNumIsPending);
             pageNumIsPending = null;
           }
+        }).catch(err => {
+          if (err.name !== 'RenderingCancelledException') {
+            console.error(err);
+          }
         });
 
         pageInput.value = num;
+        zoomLevelText.textContent = Math.round((userZoomScale / 1.2) * 100) + '%';
       });
     }
 
@@ -216,6 +232,7 @@
       queueRenderPage(pageNum);
     }
 
+    // Navigation Controls
     document.getElementById('prev-page').addEventListener('click', () => {
       if (pageNum <= 1) return;
       pageNum--;
@@ -235,6 +252,24 @@
       } else {
         e.target.value = pageNum;
       }
+    });
+
+    // Zoom Controls (Re-renders vector crispness at exact scale)
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      if (userZoomScale >= 3.0) return;
+      userZoomScale += 0.25;
+      queueRenderPage(pageNum);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      if (userZoomScale <= 0.6) return;
+      userZoomScale -= 0.25;
+      queueRenderPage(pageNum);
+    });
+
+    // Auto re-render canvas resolution if window/zoom changes
+    window.addEventListener('resize', () => {
+      if (pdfDoc) queueRenderPage(pageNum);
     });
   </script>
 </body>
