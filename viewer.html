@@ -205,12 +205,14 @@
 
           return page.getTextContent();
         }).then(textContent => {
-          pdfjsLib.renderTextLayer({
-            textContentSource: textContent,
-            container: textLayer,
-            viewport: viewport,
-            textDivs: []
-          });
+            return page.getTextContent();
+            }).then(textContent => {
+            pdfjsLib.renderTextLayer({
+                textContentSource: textContent,
+                container: textLayer,
+                viewport: viewport,
+                textDivs: []
+            });
 
           if (pageNumIsPending !== null) {
             renderPage(pageNumIsPending);
