@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Viewer - Textbook Hub</title>
+  <title>PDF Viewer - Textbook Vault</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -16,7 +16,15 @@
     </div>
   </header>
 
-  <div class="viewer-layout">
+  <!-- Error Container (Hidden by default) -->
+  <div id="not-found-container" class="not-found-card" style="display: none;">
+    <h2>404 - Textbook Not Found</h2>
+    <p>The textbook you are looking for does not exist or may have been moved.</p>
+    <a href="index.html" class="btn-primary">Return to Library</a>
+  </div>
+
+  <!-- Main Viewer Layout -->
+  <div id="viewer-layout" class="viewer-layout">
     <aside class="sidebar-container">
       <div class="sidebar-card">
         <h3>Quick Jump</h3>
@@ -50,7 +58,6 @@
   </div>
 
   <script>
-    // Theme Switcher Logic
     const themeToggleBtn = document.getElementById('theme-toggle');
     const savedTheme = localStorage.getItem('theme');
 
@@ -66,7 +73,6 @@
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
-    // PDF.js Setup
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     let pdfDoc = null,
@@ -79,55 +85,75 @@
           pageInput = document.getElementById('page-input'),
           loadingOverlay = document.getElementById('pdf-loading'),
           sidebarSource = document.getElementById('sidebar-source'),
-          sourceContent = document.getElementById('source-link-content');
+          sourceContent = document.getElementById('source-link-content'),
+          viewerLayout = document.getElementById('viewer-layout'),
+          notFoundContainer = document.getElementById('not-found-container');
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
 
-    fetch('textbooks.xml')
-      .then(response => response.text())
-      .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-      .then(data => {
-        const book = data.querySelector(`textbook[id="${selectedId}"]`);
-        if (!book) return;
+    function showNotFound() {
+      document.getElementById('book-title').textContent = 'Textbook Not Found';
+      viewerLayout.style.display = 'none';
+      notFoundContainer.style.display = 'block';
+    }
 
-        document.getElementById('book-title').textContent = book.querySelector('title').textContent;
-        const pdfPath = book.querySelector('pdfUrl').textContent;
-        
-        // Render source link ONCE to prevent flicker on page turns
-        const activeSourceUrl = book.getAttribute('sourceUrl');
-        if (activeSourceUrl) {
-          sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
-          sidebarSource.style.display = 'block';
-        }
+    if (!selectedId) {
+      showNotFound();
+    } else {
+      fetch('textbooks.xml')
+        .then(response => response.text())
+        .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+        .then(data => {
+          const book = data.querySelector(`textbook[id="${selectedId}"]`);
+          
+          if (!book) {
+            showNotFound();
+            return;
+          }
 
-        const bookmarkContainer = document.getElementById('bookmark-buttons');
-        const bookmarks = book.querySelectorAll('bookmark');
-        bookmarks.forEach(bm => {
-          const page = parseInt(bm.getAttribute('page'));
-          const label = bm.textContent;
-          const btn = document.createElement('button');
-          btn.textContent = `${label} (p. ${page})`;
-          btn.onclick = () => goToPage(page);
-          bookmarkContainer.appendChild(btn);
+          document.getElementById('book-title').textContent = book.querySelector('title').textContent;
+          const pdfPath = book.querySelector('pdfUrl').textContent;
+          
+          const activeSourceUrl = book.getAttribute('sourceUrl');
+          if (activeSourceUrl) {
+            sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
+            sidebarSource.style.display = 'block';
+          }
+
+          const bookmarkContainer = document.getElementById('bookmark-buttons');
+          const bookmarks = book.querySelectorAll('bookmark');
+          bookmarks.forEach(bm => {
+            const page = parseInt(bm.getAttribute('page'));
+            const label = bm.textContent;
+            const btn = document.createElement('button');
+            btn.textContent = `${label} (p. ${page})`;
+            btn.onclick = () => goToPage(page);
+            bookmarkContainer.appendChild(btn);
+          });
+
+          pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
+            pdfDoc = pdfDoc_;
+            document.getElementById('page-count').textContent = pdfDoc.numPages;
+            pageInput.max = pdfDoc.numPages;
+            renderPage(pageNum);
+          }).catch(err => {
+            console.error("PDF Load Error:", err);
+            showNotFound();
+          });
+        })
+        .catch(err => {
+          console.error("XML Load Error:", err);
+          showNotFound();
         });
-
-        pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
-          pdfDoc = pdfDoc_;
-          document.getElementById('page-count').textContent = pdfDoc.numPages;
-          pageInput.max = pdfDoc.numPages;
-          renderPage(pageNum);
-        });
-      });
+    }
 
     function renderPage(num) {
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
 
       pdfDoc.getPage(num).then(page => {
-        // Natural device pixel ratio rendering without forced upsampling
         const outputScale = window.devicePixelRatio || 1;
-        
         const baseScale = 1.2; 
         const viewport = page.getViewport({ scale: baseScale });
 
@@ -170,7 +196,7 @@
     }
 
     function goToPage(num) {
-      if (num < 1 || num > pdfDoc.numPages) return;
+      if (!pdfDoc || num < 1 || num > pdfDoc.numPages) return;
       pageNum = num;
       queueRenderPage(pageNum);
     }
@@ -189,7 +215,7 @@
 
     pageInput.addEventListener('change', (e) => {
       const targetPage = parseInt(e.target.value);
-      if (targetPage >= 1 && targetPage <= pdfDoc.numPages) {
+      if (pdfDoc && targetPage >= 1 && targetPage <= pdfDoc.numPages) {
         goToPage(targetPage);
       } else {
         e.target.value = pageNum;
