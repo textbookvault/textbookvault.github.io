@@ -3,6 +3,9 @@
   <textbook id="apush-textbook" sourceUrl="https://archive.org/details/american-history-15th-edition-alan-brinkley-american-history-connecting-with-the_202007/">
     <title>APUSH Textbook</title>
     <pdfUrl>textbooks/apush-textbook-1.pdf</pdfUrl>
+    <notes>
+      <note>These page numbers will NOT match the page numbers in the book.</note>
+    </notes>
     <bookmarks>
       <bookmark page="542">Chapter 19</bookmark>
       <bookmark page="579">Chapter 20</bookmark>

@@ -24,6 +24,11 @@
 
   <div id="viewer-layout" class="viewer-layout">
     <aside class="sidebar-container">
+      <div id="sidebar-notes" class="sidebar-card" style="display: none;">
+        <h3>Notes</h3>
+        <ul id="notes-list" class="notes-list"></ul>
+      </div>
+
       <div class="sidebar-card">
         <h3>Quick Jump</h3>
         <div id="bookmark-buttons" class="button-group"></div>
@@ -42,11 +47,6 @@
           Page <input type="number" id="page-input" value="1" min="1"> / <span id="page-count">-</span>
         </span>
         <button id="next-page" class="btn-nav">Next →</button>
-        <span class="zoom-controls">
-          <button id="zoom-out" class="btn-nav">-</button>
-          <span id="zoom-level">100%</span>
-          <button id="zoom-in" class="btn-nav">+</button>
-        </span>
       </div>
       
       <div class="canvas-wrapper">
@@ -82,9 +82,7 @@
     let pdfDoc = null,
         pageNum = 1,
         pageIsRendering = false,
-        pageNumIsPending = null,
-        userZoomScale = 1.2,
-        renderTask = null;
+        pageNumIsPending = null;
 
     const canvas = document.getElementById('pdf-render'),
           ctx = canvas.getContext('2d'),
@@ -93,9 +91,10 @@
           loadingOverlay = document.getElementById('pdf-loading'),
           sidebarSource = document.getElementById('sidebar-source'),
           sourceContent = document.getElementById('source-link-content'),
+          sidebarNotes = document.getElementById('sidebar-notes'),
+          notesList = document.getElementById('notes-list'),
           viewerLayout = document.getElementById('viewer-layout'),
-          notFoundContainer = document.getElementById('not-found-container'),
-          zoomLevelText = document.getElementById('zoom-level');
+          notFoundContainer = document.getElementById('not-found-container');
 
     const urlParams = new URLSearchParams(window.location.search);
     const selectedId = urlParams.get('id');
@@ -122,6 +121,17 @@
           document.getElementById('book-title').textContent = book.querySelector('title').textContent;
           const pdfPath = book.querySelector('pdfUrl').textContent;
           
+          const notes = book.querySelectorAll('notes > note');
+          if (notes.length > 0) {
+            notesList.innerHTML = '';
+            notes.forEach(note => {
+              const li = document.createElement('li');
+              li.textContent = note.textContent;
+              notesList.appendChild(li);
+            });
+            sidebarNotes.style.display = 'block';
+          }
+
           const activeSourceUrl = book.getAttribute('sourceUrl');
           if (activeSourceUrl) {
             sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
@@ -156,31 +166,25 @@
     }
 
     function renderPage(num) {
-      if (pageIsRendering && renderTask) {
-        renderTask.cancel();
-      }
-
       pageIsRendering = true;
       loadingOverlay.style.display = 'flex';
       textLayer.innerHTML = '';
 
       pdfDoc.getPage(num).then(page => {
-        // Multiply by screen density to ensure retina/high-DPI sharpness
-        const dpr = window.devicePixelRatio || 1;
-        const viewport = page.getViewport({ scale: userZoomScale });
+        const outputScale = window.devicePixelRatio || 1;
+        const baseScale = 1.2; 
+        const viewport = page.getViewport({ scale: baseScale });
 
-        // Internal resolution scales up dynamically when zoomed
-        canvas.width = Math.floor(viewport.width * dpr);
-        canvas.height = Math.floor(viewport.height * dpr);
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
 
-        // Display dimensions match exact zoom size
         canvas.style.width = Math.floor(viewport.width) + "px";
         canvas.style.height = Math.floor(viewport.height) + "px";
 
         textLayer.style.width = Math.floor(viewport.width) + "px";
         textLayer.style.height = Math.floor(viewport.height) + "px";
 
-        const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
 
         const renderCtx = { 
           canvasContext: ctx, 
@@ -188,7 +192,7 @@
           transform: transform
         };
 
-        renderTask = page.render(renderCtx);
+        const renderTask = page.render(renderCtx);
 
         renderTask.promise.then(() => {
           pageIsRendering = false;
@@ -207,14 +211,9 @@
             renderPage(pageNumIsPending);
             pageNumIsPending = null;
           }
-        }).catch(err => {
-          if (err.name !== 'RenderingCancelledException') {
-            console.error(err);
-          }
         });
 
         pageInput.value = num;
-        zoomLevelText.textContent = Math.round((userZoomScale / 1.2) * 100) + '%';
       });
     }
 
@@ -232,7 +231,6 @@
       queueRenderPage(pageNum);
     }
 
-    // Navigation Controls
     document.getElementById('prev-page').addEventListener('click', () => {
       if (pageNum <= 1) return;
       pageNum--;
@@ -252,24 +250,6 @@
       } else {
         e.target.value = pageNum;
       }
-    });
-
-    // Zoom Controls (Re-renders vector crispness at exact scale)
-    document.getElementById('zoom-in').addEventListener('click', () => {
-      if (userZoomScale >= 3.0) return;
-      userZoomScale += 0.25;
-      queueRenderPage(pageNum);
-    });
-
-    document.getElementById('zoom-out').addEventListener('click', () => {
-      if (userZoomScale <= 0.6) return;
-      userZoomScale -= 0.25;
-      queueRenderPage(pageNum);
-    });
-
-    // Auto re-render canvas resolution if window/zoom changes
-    window.addEventListener('resize', () => {
-      if (pdfDoc) queueRenderPage(pageNum);
     });
   </script>
 </body>
