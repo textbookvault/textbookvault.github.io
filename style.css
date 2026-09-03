@@ -221,6 +221,9 @@ canvas {
   display: block;
   max-width: 100%;
   height: auto;
+  /* Enhance contrast for downscaled text */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .pdf-loading-overlay {
@@ -252,13 +255,4 @@ canvas {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-canvas {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  /* Smooth downscaling for low-resolution displays */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
 }

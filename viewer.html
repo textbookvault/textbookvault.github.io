@@ -1,146 +1,199 @@
-<script>
-  // Theme Switcher Logic
-  const themeToggleBtn = document.getElementById('theme-toggle');
-  const savedTheme = localStorage.getItem('theme');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer - Textbook Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1 id="book-title">Loading...</h1>
+    <div class="header-actions">
+      <button id="theme-toggle" class="btn-theme">🌙 Dark Mode</button>
+      <a href="index.html" class="nav-link">← Back to Home</a>
+    </div>
+  </header>
 
-  if (savedTheme === 'dark') {
-    document.body.classList.add('dark-mode');
-    themeToggleBtn.textContent = '☀️ Light Mode';
-  }
+  <div class="viewer-layout">
+    <aside class="sidebar-container">
+      <div class="sidebar-card">
+        <h3>Quick Jump</h3>
+        <div id="bookmark-buttons" class="button-group"></div>
+      </div>
 
-  themeToggleBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    themeToggleBtn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  });
+      <div id="sidebar-source" class="sidebar-card" style="display: none;">
+        <h3>Source Material</h3>
+        <div id="source-link-content"></div>
+      </div>
+    </aside>
 
-  // PDF.js Setup
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-  let pdfDoc = null,
-      pageNum = 1,
-      pageIsRendering = false,
-      pageNumIsPending = null;
-
-  const canvas = document.getElementById('pdf-render'),
-        ctx = canvas.getContext('2d'),
-        pageInput = document.getElementById('page-input'),
-        loadingOverlay = document.getElementById('pdf-loading'),
-        sidebarSource = document.getElementById('sidebar-source'),
-        sourceContent = document.getElementById('source-link-content');
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const selectedId = urlParams.get('id');
-
-  fetch('textbooks.xml')
-    .then(response => response.text())
-    .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-    .then(data => {
-      const book = data.querySelector(`textbook[id="${selectedId}"]`);
-      if (!book) return;
-
-      document.getElementById('book-title').textContent = book.querySelector('title').textContent;
-      const pdfPath = book.querySelector('pdfUrl').textContent;
+    <main class="pdf-container">
+      <div class="controls">
+        <button id="prev-page" class="btn-nav">← Prev</button>
+        <span>
+          Page <input type="number" id="page-input" value="1" min="1"> / <span id="page-count">-</span>
+        </span>
+        <button id="next-page" class="btn-nav">Next →</button>
+      </div>
       
-      // Set source link ONCE on initial load so it never flickers on page turns
-      const activeSourceUrl = book.getAttribute('sourceUrl');
-      if (activeSourceUrl) {
-        sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
-        sidebarSource.style.display = 'block';
-      }
+      <div class="canvas-wrapper">
+        <div id="pdf-loading" class="pdf-loading-overlay">
+          <div class="spinner"></div>
+          <p>Loading PDF, please wait...</p>
+        </div>
 
-      // Build quick jump bookmarks
-      const bookmarkContainer = document.getElementById('bookmark-buttons');
-      const bookmarks = book.querySelectorAll('bookmark');
-      bookmarks.forEach(bm => {
-        const page = parseInt(bm.getAttribute('page'));
-        const label = bm.textContent;
-        const btn = document.createElement('button');
-        btn.textContent = `${label} (p. ${page})`;
-        btn.onclick = () => goToPage(page);
-        bookmarkContainer.appendChild(btn);
-      });
+        <canvas id="pdf-render"></canvas>
+      </div>
+    </main>
+  </div>
 
-      pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
-        pdfDoc = pdfDoc_;
-        document.getElementById('page-count').textContent = pdfDoc.numPages;
-        pageInput.max = pdfDoc.numPages;
-        renderPage(pageNum);
-      });
+  <script>
+    // Theme Switcher Logic
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggleBtn.textContent = '☀️ Light Mode';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      themeToggleBtn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
-  function renderPage(num) {
-    pageIsRendering = true;
-    loadingOverlay.style.display = 'flex';
+    // PDF.js Setup
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    pdfDoc.getPage(num).then(page => {
-      const outputScale = window.devicePixelRatio || 1;
-      const baseScale = 1.5; 
-      const viewport = page.getViewport({ scale: baseScale });
+    let pdfDoc = null,
+        pageNum = 1,
+        pageIsRendering = false,
+        pageNumIsPending = null;
 
-      canvas.width = Math.floor(viewport.width * outputScale);
-      canvas.height = Math.floor(viewport.height * outputScale);
+    const canvas = document.getElementById('pdf-render'),
+          ctx = canvas.getContext('2d'),
+          pageInput = document.getElementById('page-input'),
+          loadingOverlay = document.getElementById('pdf-loading'),
+          sidebarSource = document.getElementById('sidebar-source'),
+          sourceContent = document.getElementById('source-link-content');
 
-      canvas.style.width = Math.floor(viewport.width) + "px";
-      canvas.style.height = Math.floor(viewport.height) + "px";
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedId = urlParams.get('id');
 
-      const transform = outputScale !== 1 
-        ? [outputScale, 0, 0, outputScale, 0, 0] 
-        : null;
+    fetch('textbooks.xml')
+      .then(response => response.text())
+      .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+      .then(data => {
+        const book = data.querySelector(`textbook[id="${selectedId}"]`);
+        if (!book) return;
 
-      const renderCtx = { 
-        canvasContext: ctx, 
-        viewport: viewport,
-        transform: transform
-      };
-
-      page.render(renderCtx).promise.then(() => {
-        pageIsRendering = false;
-        loadingOverlay.style.display = 'none';
-
-        if (pageNumIsPending !== null) {
-          renderPage(pageNumIsPending);
-          pageNumIsPending = null;
+        document.getElementById('book-title').textContent = book.querySelector('title').textContent;
+        const pdfPath = book.querySelector('pdfUrl').textContent;
+        
+        // Render source link ONCE to prevent flicker on page turns
+        const activeSourceUrl = book.getAttribute('sourceUrl');
+        if (activeSourceUrl) {
+          sourceContent.innerHTML = `<a href="${activeSourceUrl}" target="_blank" rel="noopener noreferrer">${activeSourceUrl}</a>`;
+          sidebarSource.style.display = 'block';
         }
+
+        const bookmarkContainer = document.getElementById('bookmark-buttons');
+        const bookmarks = book.querySelectorAll('bookmark');
+        bookmarks.forEach(bm => {
+          const page = parseInt(bm.getAttribute('page'));
+          const label = bm.textContent;
+          const btn = document.createElement('button');
+          btn.textContent = `${label} (p. ${page})`;
+          btn.onclick = () => goToPage(page);
+          bookmarkContainer.appendChild(btn);
+        });
+
+        pdfjsLib.getDocument(pdfPath).promise.then(pdfDoc_ => {
+          pdfDoc = pdfDoc_;
+          document.getElementById('page-count').textContent = pdfDoc.numPages;
+          pageInput.max = pdfDoc.numPages;
+          renderPage(pageNum);
+        });
       });
 
-      pageInput.value = num;
+    function renderPage(num) {
+      pageIsRendering = true;
+      loadingOverlay.style.display = 'flex';
+
+      pdfDoc.getPage(num).then(page => {
+        // Higher density buffer guarantees sharp text on low-DPI screens
+        const deviceRatio = window.devicePixelRatio || 1;
+        const outputScale = Math.max(deviceRatio, 2); 
+        
+        const baseScale = 1.25; 
+        const viewport = page.getViewport({ scale: baseScale });
+
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+
+        const transform = [outputScale, 0, 0, outputScale, 0, 0];
+
+        const renderCtx = { 
+          canvasContext: ctx, 
+          viewport: viewport,
+          transform: transform
+        };
+
+        page.render(renderCtx).promise.then(() => {
+          pageIsRendering = false;
+          loadingOverlay.style.display = 'none';
+
+          if (pageNumIsPending !== null) {
+            renderPage(pageNumIsPending);
+            pageNumIsPending = null;
+          }
+        });
+
+        pageInput.value = num;
+      });
+    }
+
+    function queueRenderPage(num) {
+      if (pageIsRendering) {
+        pageNumIsPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    function goToPage(num) {
+      if (num < 1 || num > pdfDoc.numPages) return;
+      pageNum = num;
+      queueRenderPage(pageNum);
+    }
+
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
     });
-  }
 
-  function queueRenderPage(num) {
-    if (pageIsRendering) {
-      pageNumIsPending = num;
-    } else {
-      renderPage(num);
-    }
-  }
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    });
 
-  function goToPage(num) {
-    if (num < 1 || num > pdfDoc.numPages) return;
-    pageNum = num;
-    queueRenderPage(pageNum);
-  }
-
-  document.getElementById('prev-page').addEventListener('click', () => {
-    if (pageNum <= 1) return;
-    pageNum--;
-    queueRenderPage(pageNum);
-  });
-
-  document.getElementById('next-page').addEventListener('click', () => {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++;
-    queueRenderPage(pageNum);
-  });
-
-  pageInput.addEventListener('change', (e) => {
-    const targetPage = parseInt(e.target.value);
-    if (targetPage >= 1 && targetPage <= pdfDoc.numPages) {
-      goToPage(targetPage);
-    } else {
-      e.target.value = pageNum;
-    }
-  });
-</script>
+    pageInput.addEventListener('change', (e) => {
+      const targetPage = parseInt(e.target.value);
+      if (targetPage >= 1 && targetPage <= pdfDoc.numPages) {
+        goToPage(targetPage);
+      } else {
+        e.target.value = pageNum;
+      }
+    });
+  </script>
+</body>
+</html>
