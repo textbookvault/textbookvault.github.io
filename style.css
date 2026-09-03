@@ -221,9 +221,6 @@ canvas {
   display: block;
   max-width: 100%;
   height: auto;
-  /* Enhance contrast for downscaled text */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
 }
 
 .pdf-loading-overlay {
