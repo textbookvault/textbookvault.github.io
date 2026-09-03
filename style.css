@@ -67,6 +67,36 @@ header h1 {
   background-color: var(--border);
 }
 
+.container {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.hero {
+  background: var(--card-bg);
+  padding: 3rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+  display: inline-block;
+  background-color: var(--primary);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 1rem;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
 .not-found-card {
   max-width: 500px;
   margin: 5rem auto;
@@ -77,6 +107,7 @@ header h1 {
   text-align: center;
 }
 
+/* Layout */
 .viewer-layout {
   display: flex;
   gap: 2rem;
@@ -104,6 +135,20 @@ header h1 {
   margin-bottom: 1rem;
   font-size: 1.1rem;
   color: var(--text);
+}
+
+.notes-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.notes-list li {
+  line-height: 1.4;
 }
 
 .button-group {
@@ -164,6 +209,11 @@ header h1 {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background 0.2s;
+}
+
+.btn-nav:hover {
+  background-color: var(--primary-hover);
 }
 
 #page-input {
@@ -177,7 +227,7 @@ header h1 {
   border-radius: 4px;
 }
 
-/* Canvas & Vector Overlay */
+/* Canvas & Text Overlay */
 .canvas-wrapper {
   position: relative;
   display: inline-block;
@@ -200,7 +250,7 @@ canvas {
   right: 0;
   bottom: 0;
   overflow: hidden;
-  opacity: 0.2;
+  opacity: 0.25;
   line-height: 1;
 }
 
@@ -241,70 +291,4 @@ canvas {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  font-weight: bold;
-  flex-wrap: wrap;
-}
-
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-
-#zoom-level {
-  min-width: 45px;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.pdf-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  overflow-x: auto;
-}
-
-/* Canvas Wrapper scales dynamically while staying sharp */
-.canvas-wrapper {
-  position: relative;
-  display: inline-block;
-  background: var(--bg-color);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-canvas {
-  display: block;
-}
-
-.textLayer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  opacity: 0.25;
-  line-height: 1;
-}
-
-.textLayer span {
-  color: transparent;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
 }
