@@ -42,4 +42,22 @@
       <bookmark page="911">Appendixes</bookmark>
     </bookmarks>
   </textbook>
+  <textbook id="the-great-gatsby" sourceUrl="https://archive.org/details/american-history-15th-edition-alan-brinkley-american-history-connecting-with-the_202007/">
+    <title>The Great Gatsby</title>
+    <pdfUrl>textbooks/the-great-gatsby.pdf</pdfUrl>
+    <notes>
+      <note>These page numbers will NOT match the page numbers in the book.</note>
+    </notes>
+    <bookmarks>
+      <bookmark page="3">Chapter 1</bookmark>
+      <bookmark page="26">Chapter 2</bookmark>
+      <bookmark page="43">Chapter 3</bookmark>
+      <bookmark page="66">Chapter 4</bookmark>
+      <bookmark page="87">Chapter 5</bookmark>
+      <bookmark page="104">Chapter 6</bookmark>
+      <bookmark page="120">Chapter 7</bookmark>
+      <bookmark page="157">Chapter 8</bookmark>
+      <bookmark page="174">Chapter 9</bookmark>
+    </bookmarks>
+  </textbook>
 </library>
