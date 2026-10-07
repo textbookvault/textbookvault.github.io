@@ -5,6 +5,7 @@
     <pdfUrl>textbooks/apush-textbook-1.pdf</pdfUrl>
     <notes>
       <note>These page numbers will NOT match the page numbers in the book.</note>
+      <note>Add 28 to the page numbers in the bookmarks to get the actual page number in the book.</note>
     </notes>
     <bookmarks>
       <bookmark page="29">Chapter 1</bookmark>
